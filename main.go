@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -95,9 +96,12 @@ func main() {
 			bot.Send(msg)
 			continue
 		}
-
 		bot.Request(tgbotapi.NewChatAction(update.Message.Chat.ID, "typing"))
-		if !update.Message.IsCommand() {
+
+		if !update.Message.IsCommand() && (update.Message.Chat.IsPrivate() ||
+			((update.Message.Chat.Type == "group" ||
+				update.Message.Chat.Type == "supergroup") &&
+				strings.HasPrefix(update.Message.Text, "@"+bot.Self.UserName))) {
 			feed, err := chatGPT.SendMessage(update.Message.Text, userConversations[update.Message.Chat.ID].ConversationID, userConversations[update.Message.Chat.ID].LastMessageID)
 			if err != nil {
 				msg.Text = fmt.Sprintf("Error: %v", err)
